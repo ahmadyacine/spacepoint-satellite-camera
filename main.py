@@ -5,6 +5,11 @@ import requests
 
 from fastapi.middleware.cors import CORSMiddleware
 
+
+
+
+app = FastAPI()
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -17,7 +22,6 @@ app.add_middleware(
 
 
 
-app = FastAPI()
 
 RESEND_API_KEY = os.getenv("RESEND_API_KEY")
 EMAIL_FROM = os.getenv("EMAIL_FROM", "onboarding@resend.dev")  # default works for testing
