@@ -37,16 +37,15 @@ def health():
     return {"ok": True}
 
 
-@app.post("/upload")
-async def upload_image(file: UploadFile = File(...)):
-    global LAST_IMAGE
-    # Ensure it's jpeg-ish (optional)
-    data = await file.read()
-    if len(data) < 200:
-        raise HTTPException(status_code=400, detail="Image too small / invalid")
-    LAST_IMAGE = data
-    return {"status": "image received", "bytes": len(LAST_IMAGE)}
+from fastapi import Request
 
+@app.post("/upload")
+async def upload_image(request: Request):
+    global LAST_IMAGE
+    LAST_IMAGE = await request.body()
+    if not LAST_IMAGE or len(LAST_IMAGE) < 200:
+        raise HTTPException(status_code=400, detail="Invalid image body")
+    return {"status": "image received", "bytes": len(LAST_IMAGE)}
 
 @app.post("/send")
 async def send_email(email: str = Form(...)):

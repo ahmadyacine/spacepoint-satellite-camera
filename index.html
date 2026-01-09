@@ -1,0 +1,422 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>SpacePoint — Satellite Camera</title>
+    <meta name="description" content="Capture a photo from SpacePoint’s satellite camera and receive it by email." />
+    <style>
+        :root {
+            --bg0: #070A12;
+            --bg1: #0B1022;
+            --card: #0E1530cc;
+            --stroke: #22306a;
+            --text: #EAF0FF;
+            --muted: #A8B3D6;
+            --accent: #7C5CFF;
+            /* SpacePoint-ish purple */
+            --accent2: #22D3EE;
+            /* cyan highlight */
+            --danger: #ff5c7a;
+            --ok: #22c55e;
+        }
+
+        * {
+            box-sizing: border-box
+        }
+
+        body {
+            margin: 0;
+            font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+            color: var(--text);
+            background:
+                radial-gradient(1200px 600px at 10% 10%, rgba(124, 92, 255, .22), transparent 60%),
+                radial-gradient(900px 500px at 90% 30%, rgba(34, 211, 238, .16), transparent 55%),
+                linear-gradient(180deg, var(--bg0), var(--bg1));
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+
+        .wrap {
+            width: min(980px, 100%);
+            display: grid;
+            gap: 18px
+        }
+
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 10px 2px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px
+        }
+
+        .logo {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, rgba(124, 92, 255, 1), rgba(34, 211, 238, 1));
+            box-shadow: 0 10px 30px rgba(124, 92, 255, .25);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .logo:after {
+            content: "";
+            position: absolute;
+            inset: -40%;
+            background: radial-gradient(circle at 30% 20%, rgba(255, 255, 255, .35), transparent 55%);
+            transform: rotate(20deg);
+        }
+
+        .brand h1 {
+            margin: 0;
+            font-size: 18px;
+            letter-spacing: .3px
+        }
+
+        .brand p {
+            margin: 2px 0 0;
+            font-size: 12px;
+            color: var(--muted)
+        }
+
+        .pill {
+            font-size: 12px;
+            color: var(--muted);
+            border: 1px solid rgba(255, 255, 255, .08);
+            background: rgba(255, 255, 255, .04);
+            padding: 8px 10px;
+            border-radius: 999px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1.1fr .9fr;
+            gap: 18px;
+        }
+
+        @media (max-width: 860px) {
+            .grid {
+                grid-template-columns: 1fr
+            }
+        }
+
+        .card {
+            background: var(--card);
+            border: 1px solid rgba(255, 255, 255, .08);
+            border-radius: 18px;
+            padding: 18px;
+            box-shadow: 0 30px 80px rgba(0, 0, 0, .45);
+            backdrop-filter: blur(10px);
+        }
+
+        .hero h2 {
+            margin: 0 0 8px;
+            font-size: 28px;
+            line-height: 1.15
+        }
+
+        .hero p {
+            margin: 0;
+            color: var(--muted);
+            line-height: 1.6
+        }
+
+        .steps {
+            margin-top: 14px;
+            display: grid;
+            gap: 10px
+        }
+
+        .step {
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+            padding: 12px;
+            border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, .07);
+            background: rgba(0, 0, 0, .14);
+        }
+
+        .n {
+            width: 26px;
+            height: 26px;
+            border-radius: 10px;
+            display: grid;
+            place-items: center;
+            background: rgba(124, 92, 255, .18);
+            border: 1px solid rgba(124, 92, 255, .35);
+            color: var(--text);
+            font-weight: 700;
+            flex: 0 0 auto;
+        }
+
+        .step b {
+            display: block;
+            margin-bottom: 2px
+        }
+
+        .step span {
+            color: var(--muted);
+            font-size: 13px
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            color: var(--muted);
+            margin: 0 0 8px
+        }
+
+        input {
+            width: 100%;
+            padding: 12px 12px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, .10);
+            background: rgba(0, 0, 0, .25);
+            color: var(--text);
+            outline: none;
+        }
+
+        input:focus {
+            border-color: rgba(124, 92, 255, .6);
+            box-shadow: 0 0 0 4px rgba(124, 92, 255, .15);
+        }
+
+        .row {
+            display: grid;
+            gap: 10px;
+            margin-top: 12px
+        }
+
+        button {
+            width: 100%;
+            border: none;
+            padding: 12px 14px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 700;
+            color: #0A0C16;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            box-shadow: 0 16px 40px rgba(124, 92, 255, .25);
+        }
+
+        button:disabled {
+            cursor: not-allowed;
+            opacity: .6;
+            box-shadow: none;
+        }
+
+        .ghost {
+            background: rgba(255, 255, 255, .06);
+            color: var(--text);
+            border: 1px solid rgba(255, 255, 255, .12);
+            box-shadow: none;
+        }
+
+        .status {
+            margin-top: 12px;
+            padding: 12px;
+            border-radius: 12px;
+            border: 1px dashed rgba(255, 255, 255, .14);
+            background: rgba(0, 0, 0, .14);
+            color: var(--muted);
+            font-size: 13px;
+            white-space: pre-wrap;
+            min-height: 52px;
+        }
+
+        .status.ok {
+            border-color: rgba(34, 197, 94, .35);
+            color: rgba(220, 255, 235, .95)
+        }
+
+        .status.err {
+            border-color: rgba(255, 92, 122, .4);
+            color: rgba(255, 220, 229, .95)
+        }
+
+        .fine {
+            margin-top: 10px;
+            font-size: 12px;
+            color: rgba(168, 179, 214, .85);
+            line-height: 1.5;
+        }
+
+        .fine a {
+            color: rgba(234, 240, 255, .95)
+        }
+
+        footer {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+            color: rgba(168, 179, 214, .75);
+            font-size: 12px;
+            padding: 2px 4px;
+        }
+
+        .kbd {
+            padding: 3px 8px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, .06);
+            border: 1px solid rgba(255, 255, 255, .08);
+            color: rgba(234, 240, 255, .9);
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+            font-size: 11px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="wrap">
+        <header>
+            <div class="brand">
+                <div class="logo" aria-hidden="true"></div>
+                <div>
+                    <h1>SpacePoint</h1>
+                    <p>Satellite Camera • Exhibition Experience</p>
+                </div>
+            </div>
+            <div class="pill">Powered by ESP32-CAM • Email delivery</div>
+        </header>
+
+        <div class="grid">
+            <section class="card hero">
+                <h2>Get your photo from the satellite camera 🚀</h2>
+                <p>
+                    Enter your email, then request your photo. You’ll receive it as an attachment in your inbox.
+                </p>
+
+                <div class="steps">
+                    <div class="step">
+                        <div class="n">1</div>
+                        <div>
+                            <b>Connect</b>
+                            <span>Join the SpacePoint Wi-Fi hotspot (provided at the booth).</span>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="n">2</div>
+                        <div>
+                            <b>Enter your email</b>
+                            <span>We’ll send your photo to the address you provide.</span>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="n">3</div>
+                        <div>
+                            <b>Send photo</b>
+                            <span>Tap the button and check your inbox (and spam folder).</span>
+                        </div>
+                    </div>
+                </div>
+
+                <p class="fine">
+                    Tip: if you don’t receive it within a minute, check your spam folder or try again.
+                </p>
+            </section>
+
+            <section class="card">
+                <label for="email">Your email</label>
+                <input id="email" type="email" placeholder="you@example.com" autocomplete="email" />
+
+                <div class="row">
+                    <button id="sendBtn">Send my photo</button>
+                    <button id="testBtn" class="ghost" type="button">Test API connection</button>
+                </div>
+
+                <div id="status" class="status">Ready.</div>
+
+                <p class="fine">
+                    By using this service, you agree to receive one email containing your photo.
+                    We do not store your email after sending (demo mode).
+                </p>
+            </section>
+        </div>
+
+        <footer>
+            <div>SpacePoint • Next-gen space education</div>
+            <div>Quick test: open <span class="kbd">/docs</span> on the API</div>
+        </footer>
+    </div>
+
+    <script>
+        // ✅ CHANGE THIS to your Render URL:
+        const API_BASE = "https://spacepoint-satellite-camera.onrender.com";
+
+        const emailEl = document.getElementById("email");
+        const sendBtn = document.getElementById("sendBtn");
+        const testBtn = document.getElementById("testBtn");
+        const statusEl = document.getElementById("status");
+
+        function setStatus(msg, type) {
+            statusEl.textContent = msg;
+            statusEl.className = "status" + (type ? (" " + type) : "");
+        }
+
+        async function postForm(path, dataObj) {
+            const body = new URLSearchParams(dataObj);
+            const res = await fetch(`${API_BASE}${path}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body
+            });
+            const json = await res.json().catch(() => ({}));
+            if (!res.ok) {
+                throw new Error(json.detail || `Request failed: ${res.status}`);
+            }
+            return json;
+        }
+
+        async function testApi() {
+            try {
+                setStatus("Checking API…", "");
+                const res = await fetch(`${API_BASE}/health`, { method: "GET" });
+                if (!res.ok) throw new Error(`Health check failed: ${res.status}`);
+                const data = await res.json().catch(() => ({}));
+                setStatus(`✅ API online: ${JSON.stringify(data)}`, "ok");
+            } catch (e) {
+                setStatus(`❌ ${e.message}\n\nMake sure API_BASE is correct.`, "err");
+            }
+        }
+
+        testBtn.addEventListener("click", testApi);
+
+        sendBtn.addEventListener("click", async () => {
+            const email = emailEl.value.trim();
+            if (!email) {
+                setStatus("❌ Please enter an email address.", "err");
+                return;
+            }
+
+            sendBtn.disabled = true;
+            try {
+                setStatus("Sending… please wait.", "");
+                const r = await postForm("/send", { email });
+                setStatus(`✅ ${r.status}\nIf you don't see it, check spam.`, "ok");
+            } catch (e) {
+                setStatus(`❌ ${e.message}`, "err");
+            } finally {
+                sendBtn.disabled = false;
+            }
+        });
+
+        // Auto-test once on load (optional)
+        // testApi();
+    </script>
+</body>
+
+</html>
