@@ -1,27 +1,33 @@
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
-from email.message import EmailMessage
-import smtplib
 import os
 import uuid
+import requests
 
 app = FastAPI()
 
-# ===== Read from Environment Variables =====
-EMAIL_FROM = os.getenv("EMAIL_FROM")
-EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD")
+RESEND_API_KEY = os.getenv("RESEND_API_KEY")
+EMAIL_FROM = os.getenv("EMAIL_FROM", "onboarding@resend.dev")  # default works for testing
 
-if not EMAIL_FROM or not EMAIL_PASSWORD:
-    raise RuntimeError("EMAIL_FROM or EMAIL_PASSWORD is not set in environment variables")
+if not RESEND_API_KEY:
+    raise RuntimeError("RESEND_API_KEY is not set in environment variables")
 
-# Store last received image in memory
 LAST_IMAGE = None
+
+
+@app.get("/health")
+def health():
+    return {"ok": True}
 
 
 @app.post("/upload")
 async def upload_image(file: UploadFile = File(...)):
     global LAST_IMAGE
-    LAST_IMAGE = await file.read()
-    return {"status": "image received"}
+    # Ensure it's jpeg-ish (optional)
+    data = await file.read()
+    if len(data) < 200:
+        raise HTTPException(status_code=400, detail="Image too small / invalid")
+    LAST_IMAGE = data
+    return {"status": "image received", "bytes": len(LAST_IMAGE)}
 
 
 @app.post("/send")
@@ -29,29 +35,36 @@ async def send_email(email: str = Form(...)):
     if LAST_IMAGE is None:
         raise HTTPException(status_code=400, detail="No image captured yet")
 
-    msg = EmailMessage()
-    msg["Subject"] = "Your SpacePoint Satellite Photo 🚀"
-    msg["From"] = EMAIL_FROM
-    msg["To"] = email
-
-    msg.set_content(
-        "Thank you for visiting SpacePoint 🚀\n\n"
-        "Attached is your satellite camera photo.\n\n"
-        "— SpacePoint Team"
-    )
+    # Resend needs base64 content for attachments
+    import base64
+    b64 = base64.b64encode(LAST_IMAGE).decode("utf-8")
 
     filename = f"spacepoint_{uuid.uuid4().hex}.jpg"
-    msg.add_attachment(LAST_IMAGE, maintype="image", subtype="jpeg", filename=filename)
 
-    try:
-        with smtplib.SMTP("smtp.gmail.com", 587, timeout=20) as server:
-            server.ehlo()
-            server.starttls()
-            server.ehlo()
-            server.login(EMAIL_FROM, EMAIL_PASSWORD)
-            server.send_message(msg)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"SMTP failed: {repr(e)}")
+    payload = {
+        "from": EMAIL_FROM,
+        "to": [email],
+        "subject": "Your SpacePoint Satellite Photo 🚀",
+        "text": "Thank you for visiting SpacePoint 🚀\n\nAttached is your satellite camera photo.",
+        "attachments": [
+            {
+                "filename": filename,
+                "content": b64
+            }
+        ],
+    }
 
+    r = requests.post(
+        "https://api.resend.com/emails",
+        headers={
+            "Authorization": f"Bearer {RESEND_API_KEY}",
+            "Content-Type": "application/json",
+        },
+        json=payload,
+        timeout=20,
+    )
+
+    if r.status_code >= 300:
+        raise HTTPException(status_code=500, detail=f"Resend failed: {r.status_code} {r.text}")
 
     return {"status": "email sent"}
