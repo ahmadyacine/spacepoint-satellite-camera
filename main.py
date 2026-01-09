@@ -44,11 +44,14 @@ async def send_email(email: str = Form(...)):
     msg.add_attachment(LAST_IMAGE, maintype="image", subtype="jpeg", filename=filename)
 
     try:
-        with smtplib.SMTP("smtp.gmail.com", 587) as server:
+        with smtplib.SMTP("smtp.gmail.com", 587, timeout=20) as server:
+            server.ehlo()
             server.starttls()
+            server.ehlo()
             server.login(EMAIL_FROM, EMAIL_PASSWORD)
             server.send_message(msg)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=f"SMTP failed: {repr(e)}")
+
 
     return {"status": "email sent"}
